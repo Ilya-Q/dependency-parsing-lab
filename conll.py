@@ -30,9 +30,9 @@ class Sentence(List[Token]):
     def write(self):
         return "\n".join(token.write() for token in self) + "\n"
 
-def read_conll(file):
+def read_conll(path: str) -> List[Sentence]:
     sentences = []
-    with open(file, "r", encoding='utf-8') as f:
+    with open(path, "r", encoding='utf-8') as f:
         while True:
             sent = []
             raw = f.readline()
@@ -44,8 +44,8 @@ def read_conll(file):
             sentences.append(Sentence(sent))
     return sentences
 
-def write_conll(file, sents):
-    with open(file, 'w', encoding='utf-8') as f:
+def write_conll(path: str, sents: List[Sentence]):
+    with open(path, 'w', encoding='utf-8') as f:
         for sent in sents:
             raw = sent.write()
             f.write(raw)
