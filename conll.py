@@ -2,33 +2,32 @@ from typing import Optional, NamedTuple, List
 
 class Token(NamedTuple):
     id: int
-    form: str
-    lemma: str
-    pos: str
-    xpos: str
-    morph: str
-    head: Optional[int]
-    rel: str
+    form: Optional[str] = None
+    lemma: Optional[str] = None
+    pos: Optional[str] = None
+    xpos: Optional[str] = None
+    morph: Optional[str] = None
+    head: Optional[int] = None
+    rel: Optional[str] = None
 
     @classmethod
     def read(cls, line: str):
-        fields = line.split('\t', maxsplit=10)
-        id, form, lemma, pos, xpos, morph, head, rel = fields[:8]
-        id = int(id)
-        if head == '_':
-            head = None
-        else:
-            head = int(head)
-        return cls(id, form, lemma, pos, xpos, morph, head, rel)
+        fields = [ field if field != '_' else None for field in line.split('\t', maxsplit=10)[:8]]
+        return cls(*fields)
 
     def write(self):
         fields = [str(field) if field is not None else "_" for field in self] + ["_", "_"]
         return "\t".join(fields)
         
-        
+ROOT = Token(id=0)
+
 class Sentence(List[Token]):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.insert(0, ROOT)
+
     def write(self):
-        return "\n".join(token.write() for token in self) + "\n"
+        return "\n".join(token.write() for token in self[1:]) + "\n"
 
 def read_conll(path: str) -> List[Sentence]:
     sentences = []
