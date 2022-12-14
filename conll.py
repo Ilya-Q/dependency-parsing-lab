@@ -13,6 +13,9 @@ class Token(NamedTuple):
     @classmethod
     def read(cls, line: str):
         fields = [ field if field != '_' else None for field in line.split('\t', maxsplit=10)[:8]]
+        fields[0] = int(fields[0])
+        if fields[6] is not None:
+            fields[6] = int(fields[6])
         return cls(*fields)
 
     def write(self):
