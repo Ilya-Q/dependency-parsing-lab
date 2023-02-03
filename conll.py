@@ -32,6 +32,9 @@ class Sentence(List[Token]):
     def write(self):
         return "\n".join(token.write() for token in self[1:]) + "\n"
 
+    def strip_syntax(self):
+        return Sentence([token._replace(head=None, rel=None) for token in self[1:]])
+
 def read_conll(path: str) -> List[Sentence]:
     sentences = []
     with open(path, "r", encoding='utf-8') as f:

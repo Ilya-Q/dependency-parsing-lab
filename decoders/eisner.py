@@ -33,7 +33,7 @@ def eisner(sent: Sentence, score: Callable[[Token, Token], float]) -> Sentence:
         if s == t:
             return
         q = Cr_b[s, t]
-        recover_right_dependents(s, q)
+        recover_left_dependents(s, q)
         ret[q] = sent[q]._replace(head=t)
         s = q
         q = Or_b[q, t]
