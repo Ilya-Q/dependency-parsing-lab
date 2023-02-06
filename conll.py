@@ -22,7 +22,7 @@ class Token(NamedTuple):
         fields = [str(field) if field is not None else "_" for field in self] + ["_", "_"]
         return "\t".join(fields)
         
-ROOT = Token(id=0)
+ROOT = Token(id=0, pos="__ROOTPOS__", form="__ROOTFORM__")
 
 class Sentence(List[Token]):
     def __init__(self, *args, **kwargs):
