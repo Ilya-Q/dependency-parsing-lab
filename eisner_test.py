@@ -44,7 +44,7 @@ class EisnerTestCase(unittest.TestCase):
 
     def test_oracle_trees(self):
         sents = read_conll("data/english/train/wsj_train.only-projective.conll06")
-        parses = partial(decode_parallel, eisner)((sent.strip_syntax(), OracleScorer(sent)) for sent in sents)
+        parses = partial(decode_parallel, eisner)((sent.no_syntax, OracleScorer(sent)) for sent in sents)
         for gold_sent, parse in zip(sents, parses):
             with self.subTest(sent=gold_sent):
                 for gold_token, parsed_token in zip(gold_sent, parse):

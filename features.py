@@ -1,4 +1,5 @@
 from conll import Sentence, Token
+from functools import cached_property
 import re
 
 def _parse_template(template: str):
@@ -31,13 +32,27 @@ DEFAULT_TEMPLATES = {t: _parse_template(t) for t in [
 ]}
 
 class TemplateFeatures:
-    def __init__(self, sent: Sentence, templates=DEFAULT_TEMPLATES, cache=True):
-        self._sent = sent
-        self._cache = {} if cache else None
+    def __init__(self, sent: Sentence, templates=DEFAULT_TEMPLATES, cache_all=False):
+        self.sent = sent
+        self._cache = {}
         self._templates = templates
+        if cache_all:
+            # pre-populate with all possible arcs
+            for head in sent:
+                for dep in sent[1:]:
+                    if head == dep:
+                        continue
+                    self(head, dep)
+        else:
+            # use just the gold arcs
+            self.gold()
 
+    @cached_property
+    def gold(self):
+        return [self(self.sent[dep.head], dep) for dep in self.sent[1:]]
+    
     def __call__(self, head: Token, dep: Token):
-        if self._cache and (head, dep) in self._cache:
+        if (head, dep) in self._cache:
             return self._cache[(head, dep)]
         # TODO: abstract individual templates out?
         dist = head.id - dep.id
@@ -64,7 +79,7 @@ class TemplateFeatures:
                 if offset is not None:
                     target_idx += offset
                 try:
-                    token = self._sent[target_idx]
+                    token = self.sent[target_idx]
                 except IndexError:
                     values.append("__NULL__")
                     continue
@@ -75,22 +90,21 @@ class TemplateFeatures:
                 else:
                     raise ValueError(f"Unknown token property '{prop}")
             if bslot is None:
-                feats.add(f"{name}={'+'.join(values)}+{direction}+{dist}")
+                feats.add((name, *values, direction, dist))
             else:
                 prop = values[bslot]
                 if dist == 1:
                     values[bslot] = "__NULL__"
-                    feats.add(f"{name}={'+'.join(values)}+{direction}+{dist}")
+                    feats.add((name, *values, direction, dist))
                 else:
                     base = dep.id if direction == 'L' else head.id
                     for idx in range(base+1, base+dist):
                         if prop == 'pos':
-                            values[bslot] = self._sent[idx].pos
+                            values[bslot] = self.sent[idx].pos
                         elif prop == 'form':
-                            values[bslot] = self._sent[idx].form
+                            values[bslot] = self.sent[idx].form
                         else:
                             raise ValueError(f"Unknown token property '{prop}")
-                        feats.add(f"{name}={'+'.join(values)}+{direction}+{dist}")
-        if self._cache:
-            self._cache[(head, dep)] = feats
+                        feats.add((name, *values, direction, dist))
+        self._cache[(head, dep)] = feats
         return feats
