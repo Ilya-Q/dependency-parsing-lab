@@ -1,6 +1,9 @@
 from features import TemplateFeatures
 from conll import read_conll, write_conll, Eval
+from decoders.npa import npa
 from pathlib import Path
+from functools import partial
+from tqdm import tqdm
 import pickle
 import lzma
 import argparse
@@ -8,6 +11,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_file", "-m", type=Path)
 parser.add_argument("--preds", "-p", type=Path)
+parser.add_argument("--npa", action="store_true", default=False)
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--gold", "-g", type=read_conll)
 group.add_argument("--blind", "-b", type=read_conll)
@@ -20,9 +24,11 @@ with lzma.open(args.model_file, 'r') as f:
 out = []
 if args.gold is not None:
     eval = Eval()
-    for sent in args.gold:
+    for sent in tqdm(args.gold):
         feats = TemplateFeatures(sent)
         pred_sent = model.parse(feats)
+        if args.npa:
+            pred_sent = npa(pred_sent, score=partial(model.score_arc, feats))
         out.append(pred_sent)
         eval.compare(sent, pred_sent)
 elif args.blind is not None:
