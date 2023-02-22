@@ -14,6 +14,7 @@ class StructuredPerceptron:
     def fit(self, train_data: Sequence[TemplateFeatures], epochs=10):
         for ep in range(epochs):
             eval = Eval()
+            random.shuffle(train_data)
             progress = tqdm(train_data, desc=f"Epoch={ep}")
             for features in progress:
                 pred_sent = self.parse(features)
