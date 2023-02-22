@@ -6,22 +6,34 @@ import lzma
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--gold", "-g", type=read_conll)
 parser.add_argument("--model_file", "-m", type=Path)
 parser.add_argument("--preds", "-p", type=Path)
+group = parser.add_mutually_exclusive_group()
+group.add_argument("--gold", "-g", type=read_conll)
+group.add_argument("--blind", "-b", type=read_conll)
+
 args = parser.parse_args()
 
 with lzma.open(args.model_file, 'r') as f:
     model = pickle.load(f)
 
 out = []
-eval = Eval()
-for sent in args.gold:
-    feats = TemplateFeatures(sent)
-    pred_sent = model.parse(feats)
-    out.append(pred_sent)
-    eval.compare(sent, pred_sent)
+if args.gold is not None:
+    eval = Eval()
+    for sent in args.gold:
+        feats = TemplateFeatures(sent)
+        pred_sent = model.parse(feats)
+        out.append(pred_sent)
+        eval.compare(sent, pred_sent)
+elif args.blind is not None:
+    for sent in args.blind:
+        feats = TemplateFeatures(sent, cache_all=True)
+        pred_sent = model.parse(feats)
+        out.append(pred_sent)
+else:
+    raise ValueError("Either the gold or the blind file is required")
 
 if args.preds is not None:
     write_conll(args.preds, out)
-print(f"UAS={eval.UAS()}")
+if args.gold is not None:
+    print(f"UAS={eval.UAS()}")

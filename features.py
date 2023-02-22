@@ -45,7 +45,7 @@ class TemplateFeatures:
                     self(head, dep)
         else:
             # use just the gold arcs
-            self.gold()
+            self.gold
 
     @cached_property
     def gold(self):
